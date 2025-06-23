@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Shape RNG with Glow</title>
+  <title>Shape RNG with Glow and Weighted Chances</title>
   <style>
     html, body {
       margin: 0; padding: 0;
@@ -65,24 +65,28 @@
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
   <script>
+    // Shapes and their exact chances as requested
     const shapes = [
-      {name:"Triangle", sides:3, weight: 1/2},
-      {name:"Square", sides:4, weight: 1/4},
-      {name:"Rectangle", sides:4, weight: 1/8, rectangle:true},
-      {name:"Circle", sides:0, weight: 1/16},
-      {name:"Semi Circle", sides:0, weight: 1/32, semi:true},
-      {name:"Pentagon", sides:5, weight: 1/64},
-      {name:"Hexagon", sides:6, weight: 1/128},
-      {name:"Heptagon", sides:7, weight: 1/256},
-      {name:"Octagon", sides:8, weight: 1/512},
-      {name:"Nonagon", sides:9, weight: 1/1024},
-      {name:"Decagon", sides:10, weight: 1/2048},
+      {name:"Triangle", sides:3, chance: 1/2},
+      {name:"Square", sides:4, chance: 1/4},
+      {name:"Rectangle", sides:4, chance: 1/8, rectangle:true},
+      {name:"Circle", sides:0, chance: 1/16},
+      {name:"Semi Circle", sides:0, chance: 1/32, semi:true},
+      {name:"Pentagon", sides:5, chance: 1/64},
+      {name:"Hexagon", sides:6, chance: 1/128},
+      {name:"Heptagon", sides:7, chance: 1/256},
+      {name:"Octagon", sides:8, chance: 1/512},
+      {name:"Nonagon", sides:9, chance: 1/1024},
+      {name:"Decagon", sides:10, chance: 1/2048},
     ];
 
-    const chances = shapes.map(s => 1/s.weight);
-    const totalChance = chances.reduce((a,b) => a + b, 0);
-    const probabilities = chances.map(c => c/totalChance);
+    // Calculate total chance sum for normalization
+    const totalChance = shapes.reduce((sum, s) => sum + s.chance, 0);
 
+    // Normalize chances to probabilities summing to 1
+    const probabilities = shapes.map(s => s.chance / totalChance);
+
+    // Weighted RNG function using those exact probabilities
     function weightedRandom(items, probs) {
       let r = Math.random();
       let acc = 0;
@@ -93,6 +97,7 @@
       return items[items.length-1];
     }
 
+    // THREE.js setup
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(
       window.innerWidth / -150, window.innerWidth / 150,
@@ -105,7 +110,7 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Materials for glow (white semi-transparent) and main shape (white)
+    // Materials for glow and main shape
     const glowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, transparent:true, opacity: 0.3});
     const fillMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
     const lineMaterial = new THREE.LineBasicMaterial({color: 0x888888});
@@ -152,8 +157,7 @@
 
     function createPolygonShape(sides, radius = 2) {
       const shape = new THREE.Shape();
-      if (sides < 3) return shape; // invalid polygon
-      
+      if (sides < 3) return shape;
       const angleStep = (Math.PI * 2) / sides;
       shape.moveTo(radius, 0);
       for(let i = 1; i < sides; i++) {
@@ -248,7 +252,7 @@
       updateCounter();
     };
 
-    // On load show last shape if any
+    // Show last rolled shape on load
     const lastShapeName = localStorage.getItem('lastShape');
     if (lastShapeName && shapeCounts[lastShapeName] > 0) {
       const lastShapeObj = shapes.find(s => s.name === lastShapeName);
