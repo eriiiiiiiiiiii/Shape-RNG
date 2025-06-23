@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Simple Triangle</title>
+  <title>Triangle Parts Animation</title>
   <style>
     html, body {
       margin: 0; padding: 0;
@@ -37,22 +37,66 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const shape = new THREE.Shape();
-shape.moveTo(0, 2);
-shape.lineTo(-2, -2);
-shape.lineTo(2, -2);
-shape.lineTo(0, 2);
+const trianglePoints = [
+  new THREE.Vector2(0, 2),
+  new THREE.Vector2(-2, -2),
+  new THREE.Vector2(2, -2)
+];
 
-const geometry = new THREE.ShapeGeometry(shape);
-const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-const triangle = new THREE.Mesh(geometry, material);
-scene.add(triangle);
+function makeShapeSegment(p1, p2) {
+  const shape = new THREE.Shape();
+  shape.moveTo(p1.x, p1.y);
+  shape.lineTo(p2.x, p2.y);
+  shape.lineTo(0, 0);
+  shape.lineTo(p1.x, p1.y);
+  const geometry = new THREE.ShapeGeometry(shape);
+  const material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+  return new THREE.Mesh(geometry, material);
+}
 
-function render() {
-  requestAnimationFrame(render);
+let leftPart, rightPart, topPart;
+
+function startAnimation() {
+  scene.clear();
+
+  leftPart = makeShapeSegment(trianglePoints[1], trianglePoints[2]);
+  rightPart = makeShapeSegment(trianglePoints[2], trianglePoints[0]);
+  topPart = makeShapeSegment(trianglePoints[0], trianglePoints[1]);
+
+  leftPart.position.set(-8, 0, 0);
+  rightPart.position.set(8, 0, 0);
+  topPart.position.set(0, 8, 0);
+
+  scene.add(leftPart, rightPart, topPart);
+
+  animateToCenter();
+}
+
+function animateToCenter() {
+  const duration = 2000;
+  const startTime = performance.now();
+
+  function animate(time) {
+    const t = Math.min((time - startTime) / duration, 1);
+
+    leftPart.position.lerpVectors(new THREE.Vector3(-8, 0, 0), new THREE.Vector3(0, 0, 0), t);
+    rightPart.position.lerpVectors(new THREE.Vector3(8, 0, 0), new THREE.Vector3(0, 0, 0), t);
+    topPart.position.lerpVectors(new THREE.Vector3(0, 8, 0), new THREE.Vector3(0, 0, 0), t);
+
+    renderer.render(scene, camera);
+
+    if (t < 1) requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+}
+
+document.getElementById("rollBtn").addEventListener("click", startAnimation);
+
+function renderLoop() {
+  requestAnimationFrame(renderLoop);
   renderer.render(scene, camera);
 }
-render();
+renderLoop();
 </script>
 </body>
 </html>
