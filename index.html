@@ -13,11 +13,16 @@
     }
     canvas {
       display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
     }
     #rollBtn {
       position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
       padding: 15px 30px;
       background: white;
       border: none;
@@ -26,9 +31,18 @@
       cursor: pointer;
       z-index: 2;
     }
+    #counter {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-size: 18px;
+      z-index: 2;
+    }
   </style>
 </head>
 <body>
+  <div id="counter">Yes: 0 | Nuh: 0</div>
   <button id="rollBtn">ROLL</button>
   <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
   <script>
@@ -43,7 +57,6 @@
 
     // Cube with one face text
     const geometry = new THREE.BoxGeometry();
-    const loader = new THREE.TextureLoader();
 
     const canvas = document.createElement('canvas');
     canvas.width = 256;
@@ -80,8 +93,18 @@
     }
     animate();
 
-    // Roll logic
     const rollBtn = document.getElementById('rollBtn');
+    const counterDisplay = document.getElementById('counter');
+
+    let yesCount = parseInt(localStorage.getItem('yesCount')) || 0;
+    let nuhCount = parseInt(localStorage.getItem('nuhCount')) || 0;
+
+    function updateCounterDisplay() {
+      counterDisplay.textContent = `Yes: ${yesCount} | Nuh: ${nuhCount}`;
+    }
+
+    updateCounterDisplay();
+
     rollBtn.onclick = () => {
       const result = Math.random() < 0.5 ? 'yes' : 'nuh';
       ctx.fillStyle = 'black';
@@ -89,10 +112,18 @@
       ctx.fillStyle = 'white';
       ctx.fillText(result, 128, 128);
       dynamicTexture.needsUpdate = true;
+
+      if (result === 'yes') {
+        yesCount++;
+        localStorage.setItem('yesCount', yesCount);
+      } else {
+        nuhCount++;
+        localStorage.setItem('nuhCount', nuhCount);
+      }
       localStorage.setItem('lastRoll', result);
+      updateCounterDisplay();
     };
 
-    // Load last result from localStorage
     const last = localStorage.getItem('lastRoll');
     if (last) {
       ctx.fillText(last, 128, 128);
