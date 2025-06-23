@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Triangle Animation</title>
+  <title>Triangle Framework</title>
   <style>
     html, body {
       margin: 0; padding: 0;
@@ -11,54 +11,6 @@
       overflow: hidden;
       font-family: sans-serif;
       user-select: none;
-    }
-    #info {
-      position: absolute;
-      bottom: 60px;
-      width: 100%;
-      text-align: center;
-      font-size: 24px;
-      color: white;
-      opacity: 0;
-      transition: opacity 1s;
-    }
-    #flash {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: white;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-      z-index: 1;
-    }
-    #edges {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .edge {
-      position: absolute;
-      background: linear-gradient(white, transparent);
-      opacity: 0;
-      transition: opacity 0.5s;
-    }
-    .edge.top {
-      top: 0; left: 0;
-      width: 100%; height: 100px;
-      background: linear-gradient(to bottom, white, transparent);
-    }
-    .edge.left {
-      top: 0; left: 0;
-      width: 100px; height: 100%;
-      background: linear-gradient(to right, white, transparent);
-    }
-    .edge.right {
-      top: 0; right: 0;
-      width: 100px; height: 100%;
-      background: linear-gradient(to left, white, transparent);
     }
     #startBtn {
       position: absolute;
@@ -77,18 +29,12 @@
 </head>
 <body>
 <button id="startBtn">Start Animation</button>
-<div id="flash"></div>
-<div id="edges">
-  <div class="edge top"></div>
-  <div class="edge left"></div>
-  <div class="edge right"></div>
-</div>
-<div id="info">Triangle - 1 in 2 chance</div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
 <script>
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 100);
 camera.position.z = 10;
+
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -142,29 +88,13 @@ function animateTriangle() {
       const fullTriangle = makeFragment(trianglePoints);
       fullTriangle.position.set(0, 0, 0);
       scene.add(fullTriangle);
-
-      flash();
-      document.getElementById("info").style.opacity = 1;
     }
   }
   requestAnimationFrame(animate);
 }
 
-function flash() {
-  const f = document.getElementById("flash");
-  f.style.opacity = 1;
-  setTimeout(() => f.style.opacity = 0, 100);
-}
-
-function showEdges() {
-  document.querySelectorAll(".edge").forEach(e => e.style.opacity = 1);
-}
-
-showEdges();
-
 const startBtn = document.getElementById("startBtn");
 startBtn.addEventListener("click", () => {
-  document.getElementById("info").style.opacity = 0;
   animateTriangle();
 });
 
