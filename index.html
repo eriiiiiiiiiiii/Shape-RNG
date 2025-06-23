@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Shape RNG with Smooth Rolling Animation</title>
+  <title>Shape RNG with Fade-in and Faster Rolling</title>
   <style>
     html, body {
       margin: 0; padding: 0;
@@ -112,10 +112,10 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Materials
+    // Materials with transparency enabled
     const glowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, transparent:true, opacity: 0.3});
-    const fillMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
-    const lineMaterial = new THREE.LineBasicMaterial({color: 0x888888});
+    const fillMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, transparent:true, opacity: 1});
+    const lineMaterial = new THREE.LineBasicMaterial({color: 0x888888, transparent:true, opacity: 1});
 
     // Geometry creators
     function createPolygonShape(sides, radius = 2) {
@@ -188,6 +188,29 @@
         glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
         scene.add(glowMesh);
       }
+    }
+
+    function setMeshOpacity(opacity) {
+      fillMaterial.opacity = opacity;
+      glowMaterial.opacity = opacity * 0.3;
+      lineMaterial.opacity = opacity;
+    }
+
+    // Animate fade in for final shape over duration ms
+    function fadeIn(duration = 600, onComplete) {
+      let start = null;
+      function step(timestamp) {
+        if (!start) start = timestamp;
+        const elapsed = timestamp - start;
+        const progress = Math.min(elapsed / duration, 1);
+        setMeshOpacity(progress);
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          if (onComplete) onComplete();
+        }
+      }
+      requestAnimationFrame(step);
     }
 
     function updateMeshes(shapeName) {
@@ -265,9 +288,12 @@
 
       const finalShape = weightedRandom(shapes, probabilities);
 
-      let interval = 50;     // start interval ms
+      let interval = 20;     // start interval ms (faster)
       const maxInterval = 400; // max interval ms
       let lastUpdate = performance.now();
+
+      // Make sure opacity is full during rolling
+      setMeshOpacity(1);
 
       function animationStep(time) {
         if (time - lastUpdate >= interval) {
@@ -286,17 +312,21 @@
         if (interval < maxInterval) {
           requestAnimationFrame(animationStep);
         } else {
-          // Final shape show
+          // Final shape show with fade-in
           updateMeshes(finalShape.name);
           shapeNameDiv.textContent = finalShape.name;
 
-          shapeCounts[finalShape.name]++;
-          localStorage.setItem('shapeCounts', JSON.stringify(shapeCounts));
-          localStorage.setItem('lastShape', finalShape.name);
-          updateCounter();
+          // Start fade in from 0 opacity
+          setMeshOpacity(0);
+          fadeIn(600, () => {
+            shapeCounts[finalShape.name]++;
+            localStorage.setItem('shapeCounts', JSON.stringify(shapeCounts));
+            localStorage.setItem('lastShape', finalShape.name);
+            updateCounter();
 
-          rolling = false;
-          rollBtn.disabled = false;
+            rolling = false;
+            rollBtn.disabled = false;
+          });
         }
       }
 
