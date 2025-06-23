@@ -19,6 +19,8 @@
       text-align: center;
       font-size: 24px;
       color: white;
+      opacity: 0;
+      transition: opacity 1s;
     }
     #flash {
       position: absolute;
@@ -39,21 +41,24 @@
     }
     .edge {
       position: absolute;
-      background: white;
+      background: linear-gradient(white, transparent);
       opacity: 0;
       transition: opacity 0.5s;
     }
     .edge.top {
       top: 0; left: 0;
-      width: 100%; height: 20px;
+      width: 100%; height: 100px;
+      background: linear-gradient(to bottom, white, transparent);
     }
     .edge.left {
       top: 0; left: 0;
-      width: 20px; height: 100%;
+      width: 100px; height: 100%;
+      background: linear-gradient(to right, white, transparent);
     }
     .edge.right {
       top: 0; right: 0;
-      width: 20px; height: 100%;
+      width: 100px; height: 100%;
+      background: linear-gradient(to left, white, transparent);
     }
     canvas {
       display: block;
@@ -67,7 +72,7 @@
   <div class="edge left"></div>
   <div class="edge right"></div>
 </div>
-<div id="info"></div>
+<div id="info">Triangle - 1 in 2 chance</div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
 <script>
 const scene = new THREE.Scene();
@@ -90,7 +95,7 @@ function makeFragment(points) {
   for (let i = 1; i < points.length; i++) shape.lineTo(points[i].x, points[i].y);
   shape.lineTo(points[0].x, points[0].y);
   const geometry = new THREE.ShapeGeometry(shape);
-  const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
   return new THREE.Mesh(geometry, material);
 }
 
@@ -120,7 +125,7 @@ function animateTriangle() {
       requestAnimationFrame(animate);
     } else {
       flash();
-      document.getElementById("info").textContent = "Triangle - 1 in 2 chance";
+      document.getElementById("info").style.opacity = 1;
     }
   }
   requestAnimationFrame(animate);
