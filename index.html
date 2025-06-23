@@ -50,7 +50,6 @@
       cursor: pointer;
       z-index: 2;
       user-select: none;
-      user-select: none;
     }
     #rollBtn:disabled {
       background: #aaa;
@@ -240,63 +239,45 @@
       return createPolygonShape(shapeObj.sides, 2);
     }
 
-    // Animation parameters
+    // Rolling animation state
     let rolling = false;
 
     rollBtn.onclick = () => {
-      if (rolling) return; // Prevent multiple clicks
+      if (rolling) return;
       rolling = true;
       rollBtn.disabled = true;
 
-      // Final chosen shape
       const finalShape = weightedRandom(shapes, probabilities);
 
-      // Animation control variables
-      let elapsed = 0;
-      const totalDuration = 4000; // 4 seconds total animation
-      const minInterval = 50;     // fastest interval ms
-      const maxInterval = 400;    // slowest interval ms
+      let interval = 50;     // start interval in ms
+      const maxInterval = 400; // max interval in ms
+      let lastUpdate = performance.now();
 
-      // Time control for slowing down
-      let lastTime = performance.now();
-      let nextUpdate = 0;
-      let interval = minInterval;
-
-      // Current displayed shape (starts null)
-      let currentDisplayedShape = null;
-
-      // Animation loop function
       function animationStep(time) {
-        elapsed += (time - lastTime);
-        lastTime = time;
+        if (time - lastUpdate >= interval) {
+          lastUpdate = time;
 
-        if (elapsed >= nextUpdate) {
-          // Pick a random shape weighted for "rolling"
-          // To keep variety, use uniform random from all shapes here (or weighted)
-          currentDisplayedShape = weightedRandom(shapes, probabilities);
+          // Pick a random shape to display during rolling
+          const rollingShape = weightedRandom(shapes, probabilities);
 
-          // Show the shape
           clearCurrentShape();
-          addShapeToScene(getShapeGeometry(currentDisplayedShape));
-          shapeNameDiv.textContent = currentDisplayedShape.name;
+          addShapeToScene(getShapeGeometry(rollingShape));
+          shapeNameDiv.textContent = rollingShape.name;
 
-          // Slow down interval exponentially (ease out)
-          // Map elapsed 0 to totalDuration to interval maxInterval to minInterval
-          const t = Math.min(elapsed / totalDuration, 1);
-          interval = minInterval + (maxInterval - minInterval) * t*t; // quadratic easing
-
-          nextUpdate = elapsed + interval;
+          // Increase interval by 10ms each cycle until maxInterval
+          interval += 10;
+          if (interval > maxInterval) interval = maxInterval;
         }
 
-        if (elapsed < totalDuration) {
+        if (interval < maxInterval) {
           requestAnimationFrame(animationStep);
         } else {
-          // End animation: show final shape for real
+          // Animation finished, show final shape
           clearCurrentShape();
           addShapeToScene(getShapeGeometry(finalShape));
           shapeNameDiv.textContent = finalShape.name;
 
-          // Update counts and localStorage
+          // Update counts & local storage
           shapeCounts[finalShape.name]++;
           localStorage.setItem('shapeCounts', JSON.stringify(shapeCounts));
           localStorage.setItem('lastShape', finalShape.name);
@@ -307,15 +288,10 @@
         }
       }
 
-      // Start animation
-      lastTime = performance.now();
-      elapsed = 0;
-      nextUpdate = 0;
-      interval = minInterval;
       requestAnimationFrame(animationStep);
     };
 
-    // On load show last shape if any
+    // Show last rolled shape on load
     const lastShapeName = localStorage.getItem('lastShape');
     if (lastShapeName && shapeCounts[lastShapeName] > 0) {
       const lastShapeObj = shapes.find(s => s.name === lastShapeName);
