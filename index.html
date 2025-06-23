@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Shape RNG with Glow and Rolling Animation</title>
+  <title>Shape RNG with Smooth Rolling Animation</title>
   <style>
     html, body {
       margin: 0; padding: 0;
@@ -72,7 +72,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
   <script>
-    // Shapes and chances as before
     const shapes = [
       {name:"Triangle", sides:3, chance: 1/2},
       {name:"Square", sides:4, chance: 1/4},
@@ -87,7 +86,6 @@
       {name:"Decagon", sides:10, chance: 1/2048},
     ];
 
-    // Total chance sum & normalize probabilities
     const totalChance = shapes.reduce((sum, s) => sum + s.chance, 0);
     const probabilities = shapes.map(s => s.chance / totalChance);
 
@@ -114,51 +112,12 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Materials for glow and main shape
+    // Materials
     const glowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, transparent:true, opacity: 0.3});
     const fillMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
     const lineMaterial = new THREE.LineBasicMaterial({color: 0x888888});
 
-    let currentShapeMesh = null;
-    let currentGlowMesh = null;
-
-    function clearCurrentShape() {
-      if(currentShapeMesh) {
-        scene.remove(currentShapeMesh);
-        currentShapeMesh.geometry.dispose();
-        currentShapeMesh.material.dispose();
-        currentShapeMesh = null;
-      }
-      if(currentGlowMesh) {
-        scene.remove(currentGlowMesh);
-        currentGlowMesh.geometry.dispose();
-        currentGlowMesh.material.dispose();
-        currentGlowMesh = null;
-      }
-    }
-
-    function addShapeToScene(shape, scale=1) {
-      // Glow mesh (slightly bigger)
-      const glowGeometry = new THREE.ShapeGeometry(shape);
-      glowGeometry.scale(scale * 1.15, scale * 1.15, 1);
-      const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
-      scene.add(glowMesh);
-      currentGlowMesh = glowMesh;
-
-      // Main shape mesh
-      const geometry = new THREE.ShapeGeometry(shape);
-      geometry.scale(scale, scale, 1);
-      const mesh = new THREE.Mesh(geometry, fillMaterial);
-
-      // Outline
-      const edges = new THREE.EdgesGeometry(geometry);
-      const outline = new THREE.LineSegments(edges, lineMaterial);
-      mesh.add(outline);
-
-      scene.add(mesh);
-      currentShapeMesh = mesh;
-    }
-
+    // Geometry creators
     function createPolygonShape(sides, radius = 2) {
       const shape = new THREE.Shape();
       if (sides < 3) return shape;
@@ -198,6 +157,70 @@
       return shape;
     }
 
+    // Prebuild shapes geometries
+    const prebuiltShapes = {};
+    for (const shapeObj of shapes) {
+      let geom;
+      if (shapeObj.semi) {
+        geom = createSemiCircleShape(2);
+      } else if (shapeObj.name === "Circle") {
+        geom = createCircleShape(2);
+      } else if (shapeObj.rectangle) {
+        geom = createRectangleShape(3, 2);
+      } else {
+        geom = createPolygonShape(shapeObj.sides, 2);
+      }
+      prebuiltShapes[shapeObj.name] = geom;
+    }
+
+    // Single reusable meshes
+    let shapeMesh = null;
+    let glowMesh = null;
+
+    function initMeshes() {
+      if (!shapeMesh) {
+        const geometry = new THREE.ShapeGeometry(new THREE.Shape());
+        shapeMesh = new THREE.Mesh(geometry, fillMaterial);
+        scene.add(shapeMesh);
+      }
+      if (!glowMesh) {
+        const glowGeometry = new THREE.ShapeGeometry(new THREE.Shape());
+        glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+        scene.add(glowMesh);
+      }
+    }
+
+    function updateMeshes(shapeName) {
+      const geom = prebuiltShapes[shapeName];
+      if (!geom) return;
+
+      // Update main shape geometry
+      shapeMesh.geometry.dispose();
+      shapeMesh.geometry = new THREE.ShapeGeometry(geom);
+      shapeMesh.geometry.scale(1,1,1);
+
+      // Update glow geometry with scale
+      glowMesh.geometry.dispose();
+      const glowGeom = new THREE.ShapeGeometry(geom);
+      glowGeom.scale(1.15,1.15,1);
+      glowMesh.geometry = glowGeom;
+
+      // Outline
+      if (!shapeMesh.outline) {
+        const edges = new THREE.EdgesGeometry(shapeMesh.geometry);
+        shapeMesh.outline = new THREE.LineSegments(edges, lineMaterial);
+        shapeMesh.add(shapeMesh.outline);
+      } else {
+        shapeMesh.remove(shapeMesh.outline);
+        const edges = new THREE.EdgesGeometry(shapeMesh.geometry);
+        shapeMesh.outline = new THREE.LineSegments(edges, lineMaterial);
+        shapeMesh.add(shapeMesh.outline);
+      }
+    }
+
+    initMeshes();
+
+    // UI elements
     const shapeNameDiv = document.getElementById('shapeName');
     const counterDiv = document.getElementById('counter');
     const rollBtn = document.getElementById('rollBtn');
@@ -216,6 +239,7 @@
     }
     updateCounter();
 
+    // Animation loop
     function animate() {
       requestAnimationFrame(animate);
       renderer.render(scene, camera);
@@ -231,15 +255,7 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // Helper: get shape mesh from shape object
-    function getShapeGeometry(shapeObj) {
-      if (shapeObj.semi) return createSemiCircleShape(2);
-      if (shapeObj.name === "Circle") return createCircleShape(2);
-      if (shapeObj.rectangle) return createRectangleShape(3, 2);
-      return createPolygonShape(shapeObj.sides, 2);
-    }
-
-    // Rolling animation state
+    // Rolling animation
     let rolling = false;
 
     rollBtn.onclick = () => {
@@ -249,22 +265,20 @@
 
       const finalShape = weightedRandom(shapes, probabilities);
 
-      let interval = 50;     // start interval in ms
-      const maxInterval = 400; // max interval in ms
+      let interval = 50;     // start interval ms
+      const maxInterval = 400; // max interval ms
       let lastUpdate = performance.now();
 
       function animationStep(time) {
         if (time - lastUpdate >= interval) {
           lastUpdate = time;
 
-          // Pick a random shape to display during rolling
+          // Pick random rolling shape
           const rollingShape = weightedRandom(shapes, probabilities);
 
-          clearCurrentShape();
-          addShapeToScene(getShapeGeometry(rollingShape));
+          updateMeshes(rollingShape.name);
           shapeNameDiv.textContent = rollingShape.name;
 
-          // Increase interval by 10ms each cycle until maxInterval
           interval += 10;
           if (interval > maxInterval) interval = maxInterval;
         }
@@ -272,12 +286,10 @@
         if (interval < maxInterval) {
           requestAnimationFrame(animationStep);
         } else {
-          // Animation finished, show final shape
-          clearCurrentShape();
-          addShapeToScene(getShapeGeometry(finalShape));
+          // Final shape show
+          updateMeshes(finalShape.name);
           shapeNameDiv.textContent = finalShape.name;
 
-          // Update counts & local storage
           shapeCounts[finalShape.name]++;
           localStorage.setItem('shapeCounts', JSON.stringify(shapeCounts));
           localStorage.setItem('lastShape', finalShape.name);
@@ -291,13 +303,11 @@
       requestAnimationFrame(animationStep);
     };
 
-    // Show last rolled shape on load
+    // Show last shape on load
     const lastShapeName = localStorage.getItem('lastShape');
     if (lastShapeName && shapeCounts[lastShapeName] > 0) {
-      const lastShapeObj = shapes.find(s => s.name === lastShapeName);
-      if (lastShapeObj) {
-        clearCurrentShape();
-        addShapeToScene(getShapeGeometry(lastShapeObj));
+      if (prebuiltShapes[lastShapeName]) {
+        updateMeshes(lastShapeName);
         shapeNameDiv.textContent = lastShapeName;
       }
     }
