@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Triangle Parts Animation</title>
+  <meta charset="UTF-8" />
+  <title>Sequential Triangle Parts Animation</title>
   <style>
     html, body {
       margin: 0; padding: 0;
@@ -38,19 +38,19 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 // Smaller triangle size
-const top = 1.5;
-const left = -1.5;
-const right = 1.5;
-const bottom = -1.5;
+const topY = 1.5;
+const leftX = -1.5;
+const rightX = 1.5;
+const bottomY = -1.5;
 
 // Bottom trapezium (covers bottom between left and right base points)
 function makeBottomTrapezium() {
   const shape = new THREE.Shape();
-  shape.moveTo(left, bottom);
-  shape.lineTo(right, bottom);
-  shape.lineTo(right * 0.5, bottom + 1);
-  shape.lineTo(left * 0.5, bottom + 1);
-  shape.lineTo(left, bottom);
+  shape.moveTo(leftX, bottomY);
+  shape.lineTo(rightX, bottomY);
+  shape.lineTo(rightX * 0.5, bottomY + 1);
+  shape.lineTo(leftX * 0.5, bottomY + 1);
+  shape.lineTo(leftX, bottomY);
   const geometry = new THREE.ShapeGeometry(shape);
   const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
   return new THREE.Mesh(geometry, material);
@@ -59,10 +59,10 @@ function makeBottomTrapezium() {
 // Left right-angled triangle (top to left base)
 function makeLeftTriangle() {
   const shape = new THREE.Shape();
-  shape.moveTo(0, top);
-  shape.lineTo(left, bottom);
-  shape.lineTo(0, bottom);
-  shape.lineTo(0, top);
+  shape.moveTo(0, topY);
+  shape.lineTo(leftX, bottomY);
+  shape.lineTo(0, bottomY);
+  shape.lineTo(0, topY);
   const geometry = new THREE.ShapeGeometry(shape);
   const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
   return new THREE.Mesh(geometry, material);
@@ -71,10 +71,10 @@ function makeLeftTriangle() {
 // Right right-angled triangle (top to right base)
 function makeRightTriangle() {
   const shape = new THREE.Shape();
-  shape.moveTo(0, top);
-  shape.lineTo(0, bottom);
-  shape.lineTo(right, bottom);
-  shape.lineTo(0, top);
+  shape.moveTo(0, topY);
+  shape.lineTo(0, bottomY);
+  shape.lineTo(rightX, bottomY);
+  shape.lineTo(0, topY);
   const geometry = new THREE.ShapeGeometry(shape);
   const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
   return new THREE.Mesh(geometry, material);
@@ -82,7 +82,24 @@ function makeRightTriangle() {
 
 let leftPart, rightPart, bottomPart;
 
-function startAnimation() {
+function animatePart(part, startPos, endPos, duration) {
+  return new Promise(resolve => {
+    const startTime = performance.now();
+    function animate(time) {
+      const t = Math.min((time - startTime) / duration, 1);
+      part.position.lerpVectors(startPos, endPos, t);
+      renderer.render(scene, camera);
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        resolve();
+      }
+    }
+    requestAnimationFrame(animate);
+  });
+}
+
+async function startAnimation() {
   scene.clear();
 
   leftPart = makeLeftTriangle();
@@ -95,25 +112,10 @@ function startAnimation() {
 
   scene.add(leftPart, rightPart, bottomPart);
 
-  animateToCenter();
-}
-
-function animateToCenter() {
-  const duration = 2000;
-  const startTime = performance.now();
-
-  function animate(time) {
-    const t = Math.min((time - startTime) / duration, 1);
-
-    leftPart.position.lerpVectors(new THREE.Vector3(-6, 0, 0), new THREE.Vector3(0, 0, 0), t);
-    rightPart.position.lerpVectors(new THREE.Vector3(6, 0, 0), new THREE.Vector3(0, 0, 0), t);
-    bottomPart.position.lerpVectors(new THREE.Vector3(0, 6, 0), new THREE.Vector3(0, 0, 0), t);
-
-    renderer.render(scene, camera);
-
-    if (t < 1) requestAnimationFrame(animate);
-  }
-  requestAnimationFrame(animate);
+  // Animate parts sequentially
+  await animatePart(bottomPart, new THREE.Vector3(0, 6, 0), new THREE.Vector3(0, 0, 0), 2000);
+  await animatePart(leftPart, new THREE.Vector3(-6, 0, 0), new THREE.Vector3(0, 0, 0), 2000);
+  await animatePart(rightPart, new THREE.Vector3(6, 0, 0), new THREE.Vector3(0, 0, 0), 2000);
 }
 
 document.getElementById("rollBtn").addEventListener("click", startAnimation);
