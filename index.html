@@ -60,12 +60,23 @@
       width: 100px; height: 100%;
       background: linear-gradient(to left, white, transparent);
     }
+    #startBtn {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      z-index: 2;
+    }
     canvas {
       display: block;
     }
   </style>
 </head>
 <body>
+<button id="startBtn">Start Animation</button>
 <div id="flash"></div>
 <div id="edges">
   <div class="edge top"></div>
@@ -78,7 +89,6 @@
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 100);
 camera.position.z = 10;
-
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -121,9 +131,18 @@ function animateTriangle() {
     rightPart.position.lerpVectors(new THREE.Vector3(8, 0, 0), target, t);
 
     renderer.render(scene, camera);
+
     if (t < 1) {
       requestAnimationFrame(animate);
     } else {
+      topPart.visible = false;
+      leftPart.visible = false;
+      rightPart.visible = false;
+
+      const fullTriangle = makeFragment(trianglePoints);
+      fullTriangle.position.set(0, 0, 0);
+      scene.add(fullTriangle);
+
       flash();
       document.getElementById("info").style.opacity = 1;
     }
@@ -142,7 +161,18 @@ function showEdges() {
 }
 
 showEdges();
-animateTriangle();
+
+const startBtn = document.getElementById("startBtn");
+startBtn.addEventListener("click", () => {
+  document.getElementById("info").style.opacity = 0;
+  animateTriangle();
+});
+
+function renderLoop() {
+  requestAnimationFrame(renderLoop);
+  renderer.render(scene, camera);
+}
+renderLoop();
 </script>
 </body>
 </html>
