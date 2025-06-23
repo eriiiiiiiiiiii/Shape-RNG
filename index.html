@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Shape RNG with Glow and Weighted Chances</title>
+  <title>Shape RNG with Glow and Rolling Animation</title>
   <style>
     html, body {
       margin: 0; padding: 0;
@@ -23,6 +23,9 @@
       font-weight: bold;
       user-select: none;
       z-index: 10;
+      min-height: 48px;
+      text-align: center;
+      width: 100%;
     }
     #counter {
       position: absolute;
@@ -47,6 +50,11 @@
       cursor: pointer;
       z-index: 2;
       user-select: none;
+      user-select: none;
+    }
+    #rollBtn:disabled {
+      background: #aaa;
+      cursor: not-allowed;
     }
     canvas {
       display: block;
@@ -65,7 +73,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
   <script>
-    // Shapes and their exact chances as requested
+    // Shapes and chances as before
     const shapes = [
       {name:"Triangle", sides:3, chance: 1/2},
       {name:"Square", sides:4, chance: 1/4},
@@ -80,13 +88,10 @@
       {name:"Decagon", sides:10, chance: 1/2048},
     ];
 
-    // Calculate total chance sum for normalization
+    // Total chance sum & normalize probabilities
     const totalChance = shapes.reduce((sum, s) => sum + s.chance, 0);
-
-    // Normalize chances to probabilities summing to 1
     const probabilities = shapes.map(s => s.chance / totalChance);
 
-    // Weighted RNG function using those exact probabilities
     function weightedRandom(items, probs) {
       let r = Math.random();
       let acc = 0;
@@ -196,6 +201,7 @@
 
     const shapeNameDiv = document.getElementById('shapeName');
     const counterDiv = document.getElementById('counter');
+    const rollBtn = document.getElementById('rollBtn');
 
     let shapeCounts = JSON.parse(localStorage.getItem('shapeCounts')) || {};
     for (const s of shapes) {
@@ -226,48 +232,96 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    const rollBtn = document.getElementById('rollBtn');
-    rollBtn.onclick = () => {
-      const rolledShape = weightedRandom(shapes, probabilities);
+    // Helper: get shape mesh from shape object
+    function getShapeGeometry(shapeObj) {
+      if (shapeObj.semi) return createSemiCircleShape(2);
+      if (shapeObj.name === "Circle") return createCircleShape(2);
+      if (shapeObj.rectangle) return createRectangleShape(3, 2);
+      return createPolygonShape(shapeObj.sides, 2);
+    }
 
-      let shape;
-      if (rolledShape.semi) {
-        shape = createSemiCircleShape(2);
-      } else if (rolledShape.name === "Circle") {
-        shape = createCircleShape(2);
-      } else if (rolledShape.rectangle) {
-        shape = createRectangleShape(3, 2);
-      } else {
-        shape = createPolygonShape(rolledShape.sides, 2);
+    // Animation parameters
+    let rolling = false;
+
+    rollBtn.onclick = () => {
+      if (rolling) return; // Prevent multiple clicks
+      rolling = true;
+      rollBtn.disabled = true;
+
+      // Final chosen shape
+      const finalShape = weightedRandom(shapes, probabilities);
+
+      // Animation control variables
+      let elapsed = 0;
+      const totalDuration = 4000; // 4 seconds total animation
+      const minInterval = 50;     // fastest interval ms
+      const maxInterval = 400;    // slowest interval ms
+
+      // Time control for slowing down
+      let lastTime = performance.now();
+      let nextUpdate = 0;
+      let interval = minInterval;
+
+      // Current displayed shape (starts null)
+      let currentDisplayedShape = null;
+
+      // Animation loop function
+      function animationStep(time) {
+        elapsed += (time - lastTime);
+        lastTime = time;
+
+        if (elapsed >= nextUpdate) {
+          // Pick a random shape weighted for "rolling"
+          // To keep variety, use uniform random from all shapes here (or weighted)
+          currentDisplayedShape = weightedRandom(shapes, probabilities);
+
+          // Show the shape
+          clearCurrentShape();
+          addShapeToScene(getShapeGeometry(currentDisplayedShape));
+          shapeNameDiv.textContent = currentDisplayedShape.name;
+
+          // Slow down interval exponentially (ease out)
+          // Map elapsed 0 to totalDuration to interval maxInterval to minInterval
+          const t = Math.min(elapsed / totalDuration, 1);
+          interval = minInterval + (maxInterval - minInterval) * t*t; // quadratic easing
+
+          nextUpdate = elapsed + interval;
+        }
+
+        if (elapsed < totalDuration) {
+          requestAnimationFrame(animationStep);
+        } else {
+          // End animation: show final shape for real
+          clearCurrentShape();
+          addShapeToScene(getShapeGeometry(finalShape));
+          shapeNameDiv.textContent = finalShape.name;
+
+          // Update counts and localStorage
+          shapeCounts[finalShape.name]++;
+          localStorage.setItem('shapeCounts', JSON.stringify(shapeCounts));
+          localStorage.setItem('lastShape', finalShape.name);
+          updateCounter();
+
+          rolling = false;
+          rollBtn.disabled = false;
+        }
       }
 
-      clearCurrentShape();
-      addShapeToScene(shape);
-
-      shapeNameDiv.textContent = rolledShape.name;
-
-      shapeCounts[rolledShape.name]++;
-      localStorage.setItem('shapeCounts', JSON.stringify(shapeCounts));
-      localStorage.setItem('lastShape', rolledShape.name);
-      updateCounter();
+      // Start animation
+      lastTime = performance.now();
+      elapsed = 0;
+      nextUpdate = 0;
+      interval = minInterval;
+      requestAnimationFrame(animationStep);
     };
 
-    // Show last rolled shape on load
+    // On load show last shape if any
     const lastShapeName = localStorage.getItem('lastShape');
     if (lastShapeName && shapeCounts[lastShapeName] > 0) {
       const lastShapeObj = shapes.find(s => s.name === lastShapeName);
       if (lastShapeObj) {
-        let shape;
-        if (lastShapeObj.semi) {
-          shape = createSemiCircleShape(2);
-        } else if (lastShapeObj.name === "Circle") {
-          shape = createCircleShape(2);
-        } else if (lastShapeObj.rectangle) {
-          shape = createRectangleShape(3, 2);
-        } else {
-          shape = createPolygonShape(lastShapeObj.sides, 2);
-        }
-        addShapeToScene(shape);
+        clearCurrentShape();
+        addShapeToScene(getShapeGeometry(lastShapeObj));
         shapeNameDiv.textContent = lastShapeName;
       }
     }
