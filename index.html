@@ -37,37 +37,63 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const trianglePoints = [
-  new THREE.Vector2(0, 2),
-  new THREE.Vector2(-2, -2),
-  new THREE.Vector2(2, -2)
-];
+// Smaller triangle size
+const top = 1.5;
+const left = -1.5;
+const right = 1.5;
+const bottom = -1.5;
 
-function makeShapeSegment(p1, p2) {
+// Bottom trapezium (covers bottom between left and right base points)
+function makeBottomTrapezium() {
   const shape = new THREE.Shape();
-  shape.moveTo(p1.x, p1.y);
-  shape.lineTo(p2.x, p2.y);
-  shape.lineTo(0, 0);
-  shape.lineTo(p1.x, p1.y);
+  shape.moveTo(left, bottom);
+  shape.lineTo(right, bottom);
+  shape.lineTo(right * 0.5, bottom + 1);
+  shape.lineTo(left * 0.5, bottom + 1);
+  shape.lineTo(left, bottom);
   const geometry = new THREE.ShapeGeometry(shape);
-  const material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+  const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
   return new THREE.Mesh(geometry, material);
 }
 
-let leftPart, rightPart, topPart;
+// Left right-angled triangle (top to left base)
+function makeLeftTriangle() {
+  const shape = new THREE.Shape();
+  shape.moveTo(0, top);
+  shape.lineTo(left, bottom);
+  shape.lineTo(0, bottom);
+  shape.lineTo(0, top);
+  const geometry = new THREE.ShapeGeometry(shape);
+  const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  return new THREE.Mesh(geometry, material);
+}
+
+// Right right-angled triangle (top to right base)
+function makeRightTriangle() {
+  const shape = new THREE.Shape();
+  shape.moveTo(0, top);
+  shape.lineTo(0, bottom);
+  shape.lineTo(right, bottom);
+  shape.lineTo(0, top);
+  const geometry = new THREE.ShapeGeometry(shape);
+  const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  return new THREE.Mesh(geometry, material);
+}
+
+let leftPart, rightPart, bottomPart;
 
 function startAnimation() {
   scene.clear();
 
-  leftPart = makeShapeSegment(trianglePoints[1], trianglePoints[2]);
-  rightPart = makeShapeSegment(trianglePoints[2], trianglePoints[0]);
-  topPart = makeShapeSegment(trianglePoints[0], trianglePoints[1]);
+  leftPart = makeLeftTriangle();
+  rightPart = makeRightTriangle();
+  bottomPart = makeBottomTrapezium();
 
-  leftPart.position.set(-8, 0, 0);
-  rightPart.position.set(8, 0, 0);
-  topPart.position.set(0, 8, 0);
+  leftPart.position.set(-6, 0, 0);
+  rightPart.position.set(6, 0, 0);
+  bottomPart.position.set(0, 6, 0);
 
-  scene.add(leftPart, rightPart, topPart);
+  scene.add(leftPart, rightPart, bottomPart);
 
   animateToCenter();
 }
@@ -79,9 +105,9 @@ function animateToCenter() {
   function animate(time) {
     const t = Math.min((time - startTime) / duration, 1);
 
-    leftPart.position.lerpVectors(new THREE.Vector3(-8, 0, 0), new THREE.Vector3(0, 0, 0), t);
-    rightPart.position.lerpVectors(new THREE.Vector3(8, 0, 0), new THREE.Vector3(0, 0, 0), t);
-    topPart.position.lerpVectors(new THREE.Vector3(0, 8, 0), new THREE.Vector3(0, 0, 0), t);
+    leftPart.position.lerpVectors(new THREE.Vector3(-6, 0, 0), new THREE.Vector3(0, 0, 0), t);
+    rightPart.position.lerpVectors(new THREE.Vector3(6, 0, 0), new THREE.Vector3(0, 0, 0), t);
+    bottomPart.position.lerpVectors(new THREE.Vector3(0, 6, 0), new THREE.Vector3(0, 0, 0), t);
 
     renderer.render(scene, camera);
 
