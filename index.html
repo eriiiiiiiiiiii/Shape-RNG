@@ -2,129 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Sequential Triangle Parts Animation</title>
-  <style>
-    html, body {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
-      background: black;
-      overflow: hidden;
-    }
-    #rollBtn {
-      position: absolute;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 20px;
-      font-size: 18px;
-      cursor: pointer;
-      z-index: 2;
-    }
-    canvas {
-      display: block;
-    }
-  </style>
+  <title>Straighter Triangle Animation</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<button id="rollBtn">Roll</button>
-<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
-<script>
-const scene = new THREE.Scene();
-const camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 100);
-camera.position.z = 10;
+  <select id="rollTypeSelect">
+    <option value="normal">Normal Triangle</option>
+    <option value="hollow">Hollow Triangle</option>
+    <option value="3d">3D Triangle</option>
+  </select>
+  <button id="rollBtn">Roll</button>
+  <button id="rigrollBtn">Rigroll</button>
+  <div id="label">Triangle 1 in 2 chance</div>
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-// Smaller triangle size
-const topY = 1.5;
-const leftX = -1.5;
-const rightX = 1.5;
-const bottomY = -1.5;
-
-// Bottom trapezium (covers bottom between left and right base points)
-function makeBottomTrapezium() {
-  const shape = new THREE.Shape();
-  shape.moveTo(leftX, bottomY);
-  shape.lineTo(rightX, bottomY);
-  shape.lineTo(rightX * 0.5, bottomY + 1);
-  shape.lineTo(leftX * 0.5, bottomY + 1);
-  shape.lineTo(leftX, bottomY);
-  const geometry = new THREE.ShapeGeometry(shape);
-  const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  return new THREE.Mesh(geometry, material);
-}
-
-// Left right-angled triangle (top to left base)
-function makeLeftTriangle() {
-  const shape = new THREE.Shape();
-  shape.moveTo(0, topY);
-  shape.lineTo(leftX, bottomY);
-  shape.lineTo(0, bottomY);
-  shape.lineTo(0, topY);
-  const geometry = new THREE.ShapeGeometry(shape);
-  const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  return new THREE.Mesh(geometry, material);
-}
-
-// Right right-angled triangle (top to right base)
-function makeRightTriangle() {
-  const shape = new THREE.Shape();
-  shape.moveTo(0, topY);
-  shape.lineTo(0, bottomY);
-  shape.lineTo(rightX, bottomY);
-  shape.lineTo(0, topY);
-  const geometry = new THREE.ShapeGeometry(shape);
-  const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  return new THREE.Mesh(geometry, material);
-}
-
-let leftPart, rightPart, bottomPart;
-
-function animatePart(part, startPos, endPos, duration) {
-  return new Promise(resolve => {
-    const startTime = performance.now();
-    function animate(time) {
-      const t = Math.min((time - startTime) / duration, 1);
-      part.position.lerpVectors(startPos, endPos, t);
-      renderer.render(scene, camera);
-      if (t < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        resolve();
-      }
-    }
-    requestAnimationFrame(animate);
-  });
-}
-
-async function startAnimation() {
-  scene.clear();
-
-  leftPart = makeLeftTriangle();
-  rightPart = makeRightTriangle();
-  bottomPart = makeBottomTrapezium();
-
-  leftPart.position.set(-6, 0, 0);
-  rightPart.position.set(6, 0, 0);
-  bottomPart.position.set(0, 6, 0);
-
-  scene.add(leftPart, rightPart, bottomPart);
-
-  // Animate parts sequentially
-  await animatePart(bottomPart, new THREE.Vector3(0, 6, 0), new THREE.Vector3(0, 0, 0), 2000);
-  await animatePart(leftPart, new THREE.Vector3(-6, 0, 0), new THREE.Vector3(0, 0, 0), 2000);
-  await animatePart(rightPart, new THREE.Vector3(6, 0, 0), new THREE.Vector3(0, 0, 0), 2000);
-}
-
-document.getElementById("rollBtn").addEventListener("click", startAnimation);
-
-function renderLoop() {
-  requestAnimationFrame(renderLoop);
-  renderer.render(scene, camera);
-}
-renderLoop();
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
