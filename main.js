@@ -1,36 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Triangle Roll</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      background: black;
-      overflow: hidden;
-    }
-    #rollBtn {
-      position: absolute;
-      left: 50%;
-      top: 85%;
-      transform: translate(-50%, -50%);
-      padding: 12px 24px;
-      font-size: 18px;
-      background: #222;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <button id="rollBtn">Roll</button>
+// main.js
+import { spawnHollowTriangle } from './HollowTriangle.js';
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
-  <script type="module" src="./main.js"></script>
-</body>
-</html>
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js';
+
+// Setup the scene
+const scene = new THREE.Scene();
+const camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 100);
+camera.position.z = 10;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Handle roll button
+const rollBtn = document.getElementById("rollBtn");
+rollBtn.addEventListener("click", () => {
+  spawnHollowTriangle(scene);
+});
+
+// Animate the scene
+function renderLoop() {
+  requestAnimationFrame(renderLoop);
+  renderer.render(scene, camera);
+}
+renderLoop();
