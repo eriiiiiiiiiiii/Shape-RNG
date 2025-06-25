@@ -1,35 +1,36 @@
-// main.js
-import { spawnNormalTriangle } from './NormalTriangle.js';
-import { spawnHollowTriangle } from './HollowTriangle.js';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Triangle Roll</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+    }
+    #rollBtn {
+      position: absolute;
+      left: 50%;
+      top: 85%;
+      transform: translate(-50%, -50%);
+      padding: 12px 24px;
+      font-size: 18px;
+      background: #222;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <button id="rollBtn">Roll</button>
 
-// Setup scene
-const scene = new THREE.Scene();
-const camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 100);
-camera.position.z = 10;
-
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-// Roll logic
-document.getElementById('rollBtn').addEventListener('click', () => {
-  // Clear previous shapes
-  while (scene.children.length > 0) {
-    scene.remove(scene.children[0]);
-  }
-
-  // Randomly choose triangle type (adjust as needed)
-  const choice = Math.random();
-  if (choice < 0.5) {
-    spawnNormalTriangle(scene);
-  } else {
-    spawnHollowTriangle(scene);
-  }
-});
-
-// Animate loop
-function renderLoop() {
-  requestAnimationFrame(renderLoop);
-  renderer.render(scene, camera);
-}
-renderLoop();
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
