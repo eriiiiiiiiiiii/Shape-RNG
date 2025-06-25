@@ -1,10 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const canvas = document.createElement('canvas');
+  const canvas = document.getElementById('triangleCanvas');
   const ctx = canvas.getContext('2d');
 
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  document.body.appendChild(canvas);
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
 
   function drawTriangle() {
     const centerX = canvas.width / 2;
