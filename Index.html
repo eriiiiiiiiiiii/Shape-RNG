@@ -1,39 +1,21 @@
-<div id="login-form">
-  <input type="text" id="username" placeholder="Enter username">
-  <button onclick="login()">Login</button>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Straighter Triangle Animation</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <select id="rollTypeSelect">
+    <option value="normal">Normal Triangle</option>
+    <option value="hollow">Hollow Triangle</option>
+    <option value="3d">3D Triangle</option>
+  </select>
+  <button id="rollBtn">Roll</button>
+  <button id="rigrollBtn">Rigroll</button>
+  <div id="label">Triangle 1 in 2 chance</div>
 
-<div id="welcome" style="display:none;">
-  <p id="welcome-msg"></p>
-  <button onclick="logout()">Logout</button>
-</div>
-
-<script>
-  function login() {
-    const username = document.getElementById('username').value.trim();
-    if (username) {
-      localStorage.setItem('loggedInUser', username);
-      showWelcome(username);
-    }
-  }
-
-  function logout() {
-    localStorage.removeItem('loggedInUser');
-    document.getElementById('welcome').style.display = 'none';
-    document.getElementById('login-form').style.display = 'block';
-  }
-
-  function showWelcome(username) {
-    document.getElementById('welcome-msg').textContent = 'Welcome, ' + username + '!';
-    document.getElementById('login-form').style.display = 'none';
-    document.getElementById('welcome').style.display = 'block';
-  }
-
-  // Auto-load session
-  window.onload = function () {
-    const user = localStorage.getItem('loggedInUser');
-    if (user) {
-      showWelcome(user);
-    }
-  };
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
