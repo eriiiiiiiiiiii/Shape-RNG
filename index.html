@@ -2,63 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Roll Controller</title>
+  <title>Multi-file Test</title>
 </head>
 <body>
-  <select id="rollTypeSelect">
-    <option value="normal">Normal Triangle</option>
-    <option value="hollow">Hollow Triangle</option>
-    <option value="3d">3D Triangle</option>
-  </select>
-  <button id="rollBtn">Roll</button>
+  <button id="testBtn">Click Me</button>
+  <div id="output"></div>
 
-  <div id="label">Waiting...</div>
-
-  <!-- Load dependencies -->
-  <iframe src="style.html" hidden></iframe>
-  <iframe src="three.html" hidden></iframe>
-  <iframe src="logic.html" hidden></iframe>
-  <iframe src="normal.html" hidden name="normalFrame"></iframe>
-  <iframe src="hollow.html" hidden name="hollowFrame"></iframe>
-  <iframe src="3d.html" hidden name="threeDFrame"></iframe>
-
-  <script>
-    document.getElementById('rollBtn').onclick = () => {
-      const type = document.getElementById('rollTypeSelect').value;
-      if (type === 'normal') {
-        window.frames['normalFrame'].postMessage('start', '*');
-      } else if (type === 'hollow') {
-        window.frames['hollowFrame'].postMessage('start', '*');
-      } else if (type === '3d') {
-        window.frames['threeDFrame'].postMessage('start', '*');
-      }
-    };
-  </script>
+  <!-- Load external module -->
+  <script type="module" src="main.js"></script>
 </body>
 </html>
-<script>
-  function explosionEffect() {
-    const div = document.createElement('div');
-    div.innerText = '💥';
-    div.style.position = 'absolute';
-    div.style.top = '50%';
-    div.style.left = '50%';
-    div.style.fontSize = '100px';
-    div.style.color = 'white';
-    div.style.transform = 'translate(-50%, -50%)';
-    div.style.zIndex = '1000';
-    document.body.appendChild(div);
-    setTimeout(() => div.remove(), 1000);
-  }
-
-  document.getElementById('rollBtn').onclick = () => {
-    const type = document.getElementById('rollTypeSelect').value;
-    if (type === 'normal') {
-      window.frames['normalFrame'].postMessage('start', '*');
-    } else if (type === 'hollow') {
-      window.frames['hollowFrame'].postMessage('start', '*');
-    } else if (type === '3d') {
-      window.frames['threeDFrame'].postMessage('start', '*');
-    }
-  };
-</script>
