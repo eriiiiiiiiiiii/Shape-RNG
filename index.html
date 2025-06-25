@@ -36,3 +36,29 @@
   </script>
 </body>
 </html>
+<script>
+  function explosionEffect() {
+    const div = document.createElement('div');
+    div.innerText = '💥';
+    div.style.position = 'absolute';
+    div.style.top = '50%';
+    div.style.left = '50%';
+    div.style.fontSize = '100px';
+    div.style.color = 'white';
+    div.style.transform = 'translate(-50%, -50%)';
+    div.style.zIndex = '1000';
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 1000);
+  }
+
+  document.getElementById('rollBtn').onclick = () => {
+    const type = document.getElementById('rollTypeSelect').value;
+    if (type === 'normal') {
+      window.frames['normalFrame'].postMessage('start', '*');
+    } else if (type === 'hollow') {
+      window.frames['hollowFrame'].postMessage('start', '*');
+    } else if (type === '3d') {
+      window.frames['threeDFrame'].postMessage('start', '*');
+    }
+  };
+</script>
