@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html><body>
+  <script>
+    window.addEventListener('message', (e) => {
+      if (e.data === 'start') {
+        window.parent.sharedLogic.explosionEffect();
+        alert("Normal Triangle Roll");
+      }
+    });
+  </script>
+</body></html>
