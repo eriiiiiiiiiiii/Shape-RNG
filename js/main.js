@@ -65,6 +65,7 @@ function showTriangleAnimation() {
 }
 
 document.getElementById("rollBtn").addEventListener("click", () => {
+ console.log("▶️ Roll button clicked");
   if (currentTriangle) {
     scene.remove(currentTriangle);
     currentTriangle = null;
