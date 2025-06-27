@@ -1,0 +1,21 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: sans-serif;
+  background-color: #000;
+}
+
+#rollBtn {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 30px;
+  font-size: 18px;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  z-index: 10;
+}
