@@ -4,10 +4,25 @@
   <meta charset="UTF-8">
   <title>Triangle RNG Game</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+  #triangleText {
+    position: absolute;
+    top: 20%;
+    width: 100%;
+    text-align: center;
+    font-size: 32px;
+    color: white;
+    display: none;
+    z-index: 20;
+    pointer-events: none;
+  }
+</style>
+
 </head>
 <body>
   <div id="game"></div>
   <button id="rollBtn">ROLL</button>
+<div id="triangleText">Triangle 1 of 2 chance</div>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
   <script src="js/main.js"></script>
